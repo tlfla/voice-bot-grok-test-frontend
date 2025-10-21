@@ -12,17 +12,30 @@ const config: Config = {
         primary: "#16a34a",
         secondary: "#059669",
 
-        // Form Page - Gold & Black Theme
+        // Form Page - Light Background with Muted Gold & Black
         form: {
+          // Primary colors
           black: "#1a1a1a",
-          gold: "#d4af37",
-          "gold-light": "#f0e5d8",
-          "gold-dark": "#a88a2a",
+          "gold-muted": "#b8956a",
+          "gold-muted-dark": "#c9a961",
+          "gold-bright": "#d4af37",
           white: "#ffffff",
           "off-white": "#f5f5f5",
-          "text-dark": "#2d2d2d",
-          border: "#e0e0e0",
-          placeholder: "#999999",
+
+          // Text colors
+          "text-black": "#1a1a1a",
+          "text-dark": "#333333",
+          "text-gray": "#999999",
+
+          // UI elements
+          "border-light": "#d9d9d9",
+          "border-dark": "#1a1a1a",
+
+          // Backgrounds
+          "bg-white": "#ffffff",
+          "bg-off-white": "#f5f5f5",
+
+          // States
           success: "#22c55e",
           error: "#ef4444",
         },
