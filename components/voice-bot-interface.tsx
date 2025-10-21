@@ -139,19 +139,19 @@ export default function VoiceBotInterface() {
   }, [room])
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-8 space-y-6">
+    <div className="space-y-6">
       {/* Status */}
       <div className="flex items-center justify-center gap-3">
         <div
           className={`w-3 h-3 rounded-full ${
-            isConnected ? 'bg-green-500' : 'bg-red-500'
+            isConnected ? 'bg-form-success' : 'bg-form-error'
           }`}
         />
-        <span className="text-sm font-medium text-gray-600">
+        <span className="text-sm font-medium text-form-text-dark">
           {isConnected ? 'Connected' : 'Disconnected'}
         </span>
         {isAgentSpeaking && (
-          <div className="flex items-center gap-2 text-blue-600 ml-4">
+          <div className="flex items-center gap-2 text-form-gold-muted ml-4">
             <Volume2 className="w-4 h-4" />
             <span className="text-sm">Agent speaking...</span>
           </div>
@@ -160,7 +160,7 @@ export default function VoiceBotInterface() {
 
       {/* Error */}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-600 p-3 rounded-lg text-sm">
+        <div className="bg-form-error bg-opacity-10 border border-form-error text-form-error p-3 rounded-lg text-sm">
           {error}
         </div>
       )}
@@ -171,7 +171,7 @@ export default function VoiceBotInterface() {
           <button
             onClick={initializeRoom}
             disabled={isLoading}
-            className="flex items-center gap-2 px-6 py-3 bg-primary hover:bg-secondary text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-6 py-3 bg-form-gold-muted hover:bg-form-gold-muted-dark text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? 'Connecting...' : '🎤 Start Conversation'}
           </button>
@@ -181,8 +181,8 @@ export default function VoiceBotInterface() {
               onClick={toggleMute}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
                 isMuted
-                  ? 'bg-red-500 hover:bg-red-600 text-white'
-                  : 'bg-gray-200 hover:bg-gray-300 text-gray-900'
+                  ? 'bg-form-error hover:bg-form-error text-white'
+                  : 'bg-form-border-light hover:bg-form-text-gray text-form-text-dark'
               }`}
             >
               {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
@@ -190,7 +190,7 @@ export default function VoiceBotInterface() {
             </button>
             <button
               onClick={disconnect}
-              className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-form-error hover:bg-form-error text-white font-medium rounded-lg transition-colors"
             >
               <PhoneOff className="w-4 h-4" />
               End Call
@@ -200,9 +200,9 @@ export default function VoiceBotInterface() {
       </div>
 
       {/* Info */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="font-medium text-blue-900 mb-2">How to use:</h4>
-        <ul className="text-sm text-blue-800 space-y-1">
+      <div className="bg-form-off-white border border-form-border-light rounded-lg p-4">
+        <h4 className="font-medium text-form-text-dark mb-2">How to use:</h4>
+        <ul className="text-sm text-form-text-dark space-y-1">
           <li>• Click "Start Conversation" to begin</li>
           <li>• Speak naturally - the AI will respond</li>
           <li>• Use the mute button if needed</li>
