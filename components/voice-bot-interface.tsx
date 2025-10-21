@@ -11,6 +11,7 @@ export default function VoiceBotInterface() {
   const [isAgentSpeaking, setIsAgentSpeaking] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string>('')
+  const [roomName] = useState(() => `roleplay-${Date.now()}-${Math.random().toString(36).substring(7)}`)
 
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
@@ -22,11 +23,11 @@ export default function VoiceBotInterface() {
 
       const participantName = `user-${Date.now()}`
 
-      // Get token
+      // Get token with unique room name per conversation
       const tokenResponse = await fetch('/api/voice-bot/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ participantName }),
+        body: JSON.stringify({ participantName, roomName }),
       })
 
       if (!tokenResponse.ok) {

@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { AccessToken } from 'livekit-server-sdk'
+import { randomUUID } from 'crypto'
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { participantName } = body
+    const { participantName, roomName } = body
 
     if (!participantName) {
       return NextResponse.json(
@@ -25,6 +26,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Use provided room name or generate unique one per session
+    // This prevents users from being forced into the same room
+    const assignedRoom = roomName || `roleplay-${randomUUID()}`
+
     // Create access token for the participant
     const at = new AccessToken(apiKey, apiSecret, {
       identity: participantName,
@@ -34,7 +39,7 @@ export async function POST(request: NextRequest) {
     // Grant permissions
     at.addGrant({
       roomJoin: true,
-      room: 'roleplay-local',
+      room: assignedRoom,
       canPublish: true,
       canPublishData: true,
       canSubscribe: true,
