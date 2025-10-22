@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { WebhookReceiver, JobRequest, WorkspaceApi } from 'livekit-server-sdk'
+import { WebhookReceiver, AgentDispatchClient } from 'livekit-server-sdk'
 
 export const runtime = 'nodejs'
 
@@ -19,29 +19,18 @@ async function dispatchAgentToRoom(roomName: string): Promise<boolean> {
       return false
     }
 
-    // Initialize LiveKit WorkspaceApi client
-    const api = new WorkspaceApi(apiKey, apiSecret, liveKitUrl)
+    // Initialize LiveKit AgentDispatchClient
+    const dispatchClient = new AgentDispatchClient(liveKitUrl, apiKey, apiSecret)
 
-    // Create a JobRequest to dispatch the agent to the room
-    // The agent running in webhook mode will poll LiveKit and receive this job
-    const jobRequest = new JobRequest({
+    console.info(`[Webhook] Dispatching agent to room: ${roomName}`)
+
+    // Create a dispatch for the agent to join the room
+    // The agent name should match what the agent registers as
+    const dispatch = await dispatchClient.createDispatch(roomName, 'agent')
+
+    console.info('[Webhook] Agent dispatch created:', {
       room: roomName,
-      participant_identity: 'agent',
-    })
-
-    console.info(`[Webhook] Dispatching agent job to room: ${roomName}`)
-    console.info('[Webhook] JobRequest details:', {
-      room: jobRequest.room,
-      participantIdentity: jobRequest.participant_identity,
-    })
-
-    // Submit the job to LiveKit using the Job service
-    // This places the job in LiveKit's queue where the agent will poll for it
-    const result = await api.sendRequest('POST', '/twirp/livekit.Job/CreateJob', jobRequest)
-
-    console.info('[Webhook] Agent job submitted to LiveKit:', {
-      room: roomName,
-      success: !!result,
+      dispatchId: dispatch.id,
     })
 
     return true
