@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { WebhookReceiver } from 'livekit-server-sdk'
+import { WebhookReceiver, JobRequest, WorkspaceApi } from 'livekit-server-sdk'
 
 export const runtime = 'nodejs'
 
@@ -10,11 +10,43 @@ const receiver = new WebhookReceiver(
 
 async function dispatchAgentToRoom(roomName: string): Promise<boolean> {
   try {
-    console.info(`[Webhook] Agent dispatch requested for room: ${roomName}`)
-    console.info('[Webhook] External agent service should join this room')
+    const apiKey = process.env.LIVEKIT_API_KEY
+    const apiSecret = process.env.LIVEKIT_API_SECRET
+    const liveKitUrl = process.env.LIVEKIT_URL
+
+    if (!apiKey || !apiSecret || !liveKitUrl) {
+      console.error('[Webhook] Missing LiveKit credentials in environment')
+      return false
+    }
+
+    // Initialize LiveKit WorkspaceApi client
+    const api = new WorkspaceApi(apiKey, apiSecret, liveKitUrl)
+
+    // Create a JobRequest to dispatch the agent to the room
+    // The agent running in webhook mode will poll LiveKit and receive this job
+    const jobRequest = new JobRequest({
+      room: roomName,
+      participant_identity: 'agent',
+    })
+
+    console.info(`[Webhook] Dispatching agent job to room: ${roomName}`)
+    console.info('[Webhook] JobRequest details:', {
+      room: jobRequest.room,
+      participantIdentity: jobRequest.participant_identity,
+    })
+
+    // Submit the job to LiveKit using the Job service
+    // This places the job in LiveKit's queue where the agent will poll for it
+    const result = await api.sendRequest('POST', '/twirp/livekit.Job/CreateJob', jobRequest)
+
+    console.info('[Webhook] Agent job submitted to LiveKit:', {
+      room: roomName,
+      success: !!result,
+    })
+
     return true
   } catch (error) {
-    console.error('[Webhook] Error dispatching agent:', error)
+    console.error('[Webhook] Error dispatching agent to LiveKit:', error)
     return false
   }
 }
