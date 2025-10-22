@@ -25,8 +25,8 @@ async function dispatchAgentToRoom(roomName: string): Promise<boolean> {
     console.info(`[Webhook] Dispatching agent to room: ${roomName}`)
 
     // Create a dispatch for the agent to join the room
-    // The agent name should match what the agent registers as
-    const dispatch = await dispatchClient.createDispatch(roomName, 'agent')
+    // The agent name must match the Agent class name: 'Assistant'
+    const dispatch = await dispatchClient.createDispatch(roomName, 'Assistant')
 
     console.info('[Webhook] Agent dispatch created:', {
       room: roomName,
