@@ -36,16 +36,28 @@ export async function POST(request: NextRequest) {
       name: participantName,
     })
 
-    // Grant permissions
+    // Grant permissions with agent auto-dispatch
     at.addGrant({
       roomJoin: true,
       room: assignedRoom,
       canPublish: true,
       canPublishData: true,
       canSubscribe: true,
+      agent: {
+        dispatch: {
+          enabled: true,
+          agents: [
+            {
+              name: 'roleplay',
+            },
+          ],
+        },
+      },
     })
 
     const token = await at.toJwt()
+
+    console.info(`[TOKEN_MINTED] room=${assignedRoom} agentName=roleplay participant=${participantName} status=success`)
 
     return NextResponse.json({
       token,

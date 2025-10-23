@@ -59,12 +59,9 @@ export async function POST(request: NextRequest) {
       if (event.event === 'participant_joined') {
         const roomName = (event as any).room?.name
         const participant = (event as any).participant
-        const isAgent = participant?.identity?.includes('agent')
 
-        if (roomName && !isAgent) {
-          console.info(`[Webhook] Dispatching agent to room: ${roomName}`)
-          await dispatchAgentToRoom(roomName)
-        }
+        console.info(`[WEBHOOK_PARTICIPANT_JOINED] room=${roomName} participant=${participant?.identity}`)
+        // Agent auto-dispatch is now embedded in token, no dispatch call needed here
       }
 
       return NextResponse.json(
@@ -78,12 +75,9 @@ export async function POST(request: NextRequest) {
 
       if (webhookData.event === 'participant_joined') {
         const roomName = webhookData.room?.name
-        const isAgent = webhookData.participant?.identity?.includes('agent')
 
-        if (roomName && !isAgent) {
-          console.info(`[Webhook] Dev mode: Dispatching agent to room: ${roomName}`)
-          await dispatchAgentToRoom(roomName)
-        }
+        console.info(`[WEBHOOK_PARTICIPANT_JOINED_DEVMODE] room=${roomName} participant=${webhookData.participant?.identity}`)
+        // Agent auto-dispatch is now embedded in token, no dispatch call needed here
       }
 
       return NextResponse.json(
