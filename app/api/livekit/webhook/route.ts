@@ -9,33 +9,37 @@ const receiver = new WebhookReceiver(
 )
 
 async function dispatchAgentToRoom(roomName: string): Promise<boolean> {
+  const startTime = Date.now()
+  console.info(`[DISPATCH_START] roomName=${roomName} timestamp=${startTime}`)
+
   try {
     const apiKey = process.env.LIVEKIT_API_KEY
     const apiSecret = process.env.LIVEKIT_API_SECRET
     const liveKitUrl = process.env.LIVEKIT_URL
 
     if (!apiKey || !apiSecret || !liveKitUrl) {
-      console.error('[Webhook] Missing LiveKit credentials in environment')
+      console.error('[DISPATCH_FAILED] Missing LiveKit credentials - apiKey exists: ' + !!apiKey + ', apiSecret exists: ' + !!apiSecret + ', liveKitUrl exists: ' + !!liveKitUrl)
       return false
     }
 
+    console.info(`[DISPATCH_CREDENTIALS_OK] liveKitUrl=${liveKitUrl}`)
+
     // Initialize LiveKit AgentDispatchClient
     const dispatchClient = new AgentDispatchClient(liveKitUrl, apiKey, apiSecret)
-
-    console.info(`[Webhook] Dispatching agent to room: ${roomName}`)
+    console.info(`[DISPATCH_CLIENT_CREATED] roomName=${roomName}`)
 
     // Create a dispatch for the agent to join the room
     // The agent name must match the Agent class name: 'Assistant'
+    console.info(`[DISPATCH_CALLING_API] roomName=${roomName} agentName=Assistant`)
     const dispatch = await dispatchClient.createDispatch(roomName, 'Assistant')
 
-    console.info('[Webhook] Agent dispatch created:', {
-      room: roomName,
-      dispatchId: dispatch.id,
-    })
+    const duration = Date.now() - startTime
+    console.info(`[DISPATCH_SUCCESS] roomName=${roomName} dispatchId=${dispatch.id} duration_ms=${duration} status=success`)
 
     return true
   } catch (error) {
-    console.error('[Webhook] Error dispatching agent to LiveKit:', error)
+    const duration = Date.now() - startTime
+    console.error(`[DISPATCH_FAILED] roomName=${roomName} duration_ms=${duration} error=${error instanceof Error ? error.message : String(error)}`)
     return false
   }
 }
