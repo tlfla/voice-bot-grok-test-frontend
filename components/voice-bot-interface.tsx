@@ -23,6 +23,11 @@ export default function VoiceBotInterface() {
 
       const participantName = `user-${Date.now()}`
 
+      // Create fresh AudioContext for this session
+      const newAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+      audioContextRef.current = newAudioContext
+      console.log('[AUDIO_CONTEXT_CREATED] context_state=running')
+
       // Get token with unique room name per conversation
       const tokenResponse = await fetch('/api/voice-bot/token', {
         method: 'POST',
@@ -39,10 +44,16 @@ export default function VoiceBotInterface() {
       const newRoom = new Room()
 
       newRoom.on(RoomEvent.Connected, async () => {
-        console.log('Connected to room')
+        console.log('[ROOM_CONNECTED] Connected to room')
         try {
+          // Resume audio context after user gesture
+          if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+            await audioContextRef.current.resume()
+            console.log('[AUDIO_ARMED]=true context_state=resumed')
+          }
+
           await newRoom.localParticipant.setMicrophoneEnabled(true)
-          console.log('Microphone enabled')
+          console.log('[MICROPHONE_ENABLED] Microphone enabled')
         } catch (err) {
           console.warn('Failed to enable microphone:', err)
         }
@@ -51,32 +62,40 @@ export default function VoiceBotInterface() {
       })
 
       newRoom.on(RoomEvent.Disconnected, () => {
-        console.log('Disconnected from room')
+        console.log('[ROOM_DISCONNECTED] Disconnected from room')
         setIsConnected(false)
       })
 
       newRoom.on(RoomEvent.TrackSubscribed, async (track, publication, participant) => {
         if (track.kind === Track.Kind.Audio) {
-          const el = remoteAudioRef.current
-          if (el) {
-            try {
-              track.attach(el)
-              el.muted = false
-              el.volume = 1.0
-              await el.play()
-              console.log('Audio playing')
+          console.log(`[TRACK_SUBSCRIBED] participant=${participant.identity} track=${track.sid}`)
 
-              if (participant.identity.includes('agent')) {
-                setIsAgentSpeaking(true)
-              }
-            } catch (err) {
-              console.warn('Audio playback error:', err)
+          // Create fresh audio element for this track
+          const audioEl = document.createElement('audio')
+          audioEl.autoplay = true
+          audioEl.controls = false
+          audioEl.muted = false
+          audioEl.volume = 1.0
+          document.body.appendChild(audioEl)
+          remoteAudioRef.current = audioEl
+
+          try {
+            track.attach(audioEl)
+            await audioEl.play()
+            console.log(`[AUDIO_ARMED]=true track_id=${track.sid}`)
+
+            if (participant.identity.includes('agent')) {
+              console.log('[AGENT_TRACK_BOUND] Agent audio bound and playing')
+              setIsAgentSpeaking(true)
             }
+          } catch (err) {
+            console.warn('Audio playback error:', err)
           }
         }
       })
 
       newRoom.on(RoomEvent.TrackUnsubscribed, (track, publication, participant) => {
+        console.log(`[TRACK_UNSUBSCRIBED] participant=${participant.identity}`)
         try {
           const el = remoteAudioRef.current
           if (el) track.detach(el)
@@ -100,6 +119,50 @@ export default function VoiceBotInterface() {
 
   const disconnect = useCallback(async () => {
     if (room) {
+      // Unsubscribe all remote tracks
+      room.participants.forEach((participant) => {
+        participant.tracks.forEach((trackPublication) => {
+          const track = trackPublication.track
+          if (track && track.kind === Track.Kind.Audio) {
+            const el = remoteAudioRef.current
+            if (el) {
+              try {
+                track.detach(el)
+              } catch (err) {
+                console.warn('Error detaching track:', err)
+              }
+            }
+          }
+        })
+      })
+
+      // Stop all local tracks
+      try {
+        room.localParticipant.tracks.forEach((trackPublication) => {
+          if (trackPublication.track) {
+            trackPublication.track.stop()
+          }
+        })
+      } catch (err) {
+        console.warn('Error stopping local tracks:', err)
+      }
+
+      // Remove audio element from DOM
+      if (remoteAudioRef.current && remoteAudioRef.current.parentNode) {
+        remoteAudioRef.current.parentNode.removeChild(remoteAudioRef.current)
+        remoteAudioRef.current = null
+      }
+
+      // Close audio context
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        try {
+          audioContextRef.current.close()
+        } catch (err) {
+          console.warn('Error closing audio context:', err)
+        }
+        audioContextRef.current = null
+      }
+
       await room.disconnect()
       setRoom(null)
       setIsConnected(false)
@@ -118,16 +181,23 @@ export default function VoiceBotInterface() {
     }
   }, [room, isMuted])
 
-  // Initialize audio element on mount
+  // Cleanup audio element on unmount only
   useEffect(() => {
-    if (!remoteAudioRef.current) {
-      const audioEl = document.createElement('audio')
-      audioEl.autoplay = true
-      audioEl.controls = false
-      audioEl.muted = false
-      audioEl.volume = 1.0
-      document.body.appendChild(audioEl)
-      remoteAudioRef.current = audioEl
+    return () => {
+      if (remoteAudioRef.current && remoteAudioRef.current.parentNode) {
+        try {
+          remoteAudioRef.current.parentNode.removeChild(remoteAudioRef.current)
+        } catch (err) {
+          console.warn('Error removing audio element:', err)
+        }
+      }
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        try {
+          audioContextRef.current.close()
+        } catch (err) {
+          console.warn('Error closing audio context:', err)
+        }
+      }
     }
   }, [])
 
