@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { AccessToken } from 'livekit-server-sdk'
+import { RoomAgentDispatch, RoomConfiguration } from '@livekit/protocol'
 import { randomUUID } from 'crypto'
 
 export async function POST(request: NextRequest) {
@@ -36,23 +37,26 @@ export async function POST(request: NextRequest) {
       name: participantName,
     })
 
-    // Grant permissions with agent auto-dispatch
+    // Grant basic room permissions
     at.addGrant({
       roomJoin: true,
       room: assignedRoom,
       canPublish: true,
       canPublishData: true,
       canSubscribe: true,
-      agent: {
-        dispatch: {
-          enabled: true,
-          agents: [
-            {
-              name: 'roleplay',
-            },
-          ],
-        },
-      },
+    })
+
+    // Configure agent auto-dispatch via roomConfig
+    at.roomConfig = new RoomConfiguration({
+      agents: [
+        new RoomAgentDispatch({
+          agentName: 'roleplay',
+          metadata: JSON.stringify({
+            room: assignedRoom,
+            participant: participantName,
+          }),
+        }),
+      ],
     })
 
     const token = await at.toJwt()
