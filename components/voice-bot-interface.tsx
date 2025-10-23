@@ -119,37 +119,13 @@ export default function VoiceBotInterface() {
 
   const disconnect = useCallback(async () => {
     if (room) {
-      // Unsubscribe all remote tracks
-      room.participants.forEach((participant) => {
-        participant.tracks.forEach((trackPublication) => {
-          const track = trackPublication.track
-          if (track && track.kind === Track.Kind.Audio) {
-            const el = remoteAudioRef.current
-            if (el) {
-              try {
-                track.detach(el)
-              } catch (err) {
-                console.warn('Error detaching track:', err)
-              }
-            }
-          }
-        })
-      })
-
-      // Stop all local tracks
-      try {
-        room.localParticipant.tracks.forEach((trackPublication) => {
-          if (trackPublication.track) {
-            trackPublication.track.stop()
-          }
-        })
-      } catch (err) {
-        console.warn('Error stopping local tracks:', err)
-      }
-
       // Remove audio element from DOM
       if (remoteAudioRef.current && remoteAudioRef.current.parentNode) {
-        remoteAudioRef.current.parentNode.removeChild(remoteAudioRef.current)
+        try {
+          remoteAudioRef.current.parentNode.removeChild(remoteAudioRef.current)
+        } catch (err) {
+          console.warn('Error removing audio element:', err)
+        }
         remoteAudioRef.current = null
       }
 
