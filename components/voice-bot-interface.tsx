@@ -11,7 +11,6 @@ export default function VoiceBotInterface() {
   const [isAgentSpeaking, setIsAgentSpeaking] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string>('')
-  const [roomName] = useState(() => `roleplay-${Date.now()}-${Math.random().toString(36).substring(7)}`)
 
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
@@ -22,6 +21,8 @@ export default function VoiceBotInterface() {
       setError('')
 
       const participantName = `user-${Date.now()}`
+      // Generate UNIQUE room name for EACH conversation (not reused across sessions)
+      const roomName = `roleplay-${Date.now()}-${Math.random().toString(36).substring(7)}`
 
       // Create fresh AudioContext for this session
       const newAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
