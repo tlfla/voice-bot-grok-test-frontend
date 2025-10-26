@@ -4,6 +4,21 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { Room, RoomEvent, Track, RemoteParticipant } from 'livekit-client'
 import { Mic, MicOff, Phone, PhoneOff, Volume2, VolumeX } from 'lucide-react'
 
+// Debug flag for diagnostics (set window.__CALL_DEBUG__ = true in console to enable)
+declare global {
+  interface Window {
+    __CALL_DEBUG__?: boolean
+  }
+}
+
+// Safe disconnect helper with optional trace
+function safeDisconnect(room: Room): Promise<void> {
+  if (!window.__CALL_DEBUG__) return room.disconnect()
+  console.warn('[DISCONNECT_CALLED]')
+  console.trace()
+  return room.disconnect()
+}
+
 export default function VoiceBotInterface() {
   const [room, setRoom] = useState<Room | null>(null)
   const [isConnected, setIsConnected] = useState(false)
@@ -24,10 +39,8 @@ export default function VoiceBotInterface() {
       // Generate UNIQUE room name for EACH conversation (not reused across sessions)
       const roomName = `room-test-roleplay-${Date.now()}-${Math.random().toString(36).substring(7)}`
 
-      // Create fresh AudioContext for this session
       const newAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
       audioContextRef.current = newAudioContext
-      console.log('[AUDIO_CONTEXT_CREATED] context_state=running')
 
       // Get token with unique room name per conversation
       const tokenResponse = await fetch('/api/voice-bot/token', {
@@ -45,20 +58,16 @@ export default function VoiceBotInterface() {
       const newRoom = new Room()
 
       newRoom.on(RoomEvent.Connected, () => {
-        console.log('[ROOM_CONNECTED] Connected to room')
         setIsConnected(true)
         setIsLoading(false)
       })
 
       newRoom.on(RoomEvent.Disconnected, () => {
-        console.log('[ROOM_DISCONNECTED] Disconnected from room')
         setIsConnected(false)
       })
 
       newRoom.on(RoomEvent.TrackSubscribed, async (track, publication, participant) => {
         if (track.kind === Track.Kind.Audio) {
-          console.log(`[TRACK_SUBSCRIBED] participant=${participant.identity} track=${track.sid}`)
-
           // Create fresh audio element for this track
           const audioEl = document.createElement('audio')
           audioEl.autoplay = true
@@ -71,11 +80,9 @@ export default function VoiceBotInterface() {
           try {
             track.attach(audioEl)
             await audioEl.play()
-            console.log(`[AUDIO_ARMED]=true track_id=${track.sid}`)
 
             if (participant.identity.includes('agent')) {
-              console.log('[AGENT_TRACK_BOUND] Agent audio bound and playing')
-              console.log('[READY_FOR_USER] Room connected, agent ready, awaiting user speech')
+              if (window.__CALL_DEBUG__) console.log('[READY_FOR_USER]')
               setIsAgentSpeaking(true)
             }
           } catch (err) {
@@ -85,7 +92,6 @@ export default function VoiceBotInterface() {
       })
 
       newRoom.on(RoomEvent.TrackUnsubscribed, (track, publication, participant) => {
-        console.log(`[TRACK_UNSUBSCRIBED] participant=${participant.identity}`)
         try {
           const el = remoteAudioRef.current
           if (el) track.detach(el)
@@ -98,40 +104,27 @@ export default function VoiceBotInterface() {
         }
       })
 
-      // Log when local audio track is successfully published (for QA)
       newRoom.on(RoomEvent.LocalTrackPublished, (publication) => {
-        if (publication.kind === Track.Kind.Audio) {
-          const settings = publication.track?.mediaStreamTrack.getSettings()
-          console.log(`[AUDIO_TRACK_PUBLISHED] track=${publication.trackSid} sampleRate=${settings?.sampleRate}`)
-          console.log(`[MIC_SENDING] Local microphone track publishing audio to room`)
+        if (publication.kind === Track.Kind.Audio && window.__CALL_DEBUG__) {
+          console.log('[MIC_SENDING]')
         }
       })
 
       await newRoom.connect(url, token)
       setRoom(newRoom)
 
-      // iOS Safari: unlock audio playback with user gesture
       await newRoom.startAudio()
-      console.log('[AUDIO_UNLOCKED] Audio context started for iOS Safari')
 
-      // Resume audio context after user gesture
       if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
         await audioContextRef.current.resume()
-        console.log('[AUDIO_ARMED]=true context_state=resumed')
       }
 
       try {
-        // Step 1: Prompt for mic permission (iOS Safari needs this separate)
-        await newRoom.localParticipant.setMicrophoneEnabled(true)
-        console.log('[MIC_PERMISSION] Microphone permission granted')
-
-        // Step 2: Re-enable with publish options for bandwidth optimization and network resilience
         await newRoom.localParticipant.setMicrophoneEnabled(true, undefined, {
-          audioPreset: { maxBitrate: 28000 },
+          audioBitrate: 28000,
           dtx: true,
-          red: true   // Enable RED (redundancy encoding) for packet loss recovery
+          red: true
         })
-        console.log('[MICROPHONE_ENABLED] Microphone enabled with 28kbps bitrate, DTX, and RED')
       } catch (err) {
         console.warn('Failed to enable microphone:', err)
       }
@@ -143,9 +136,7 @@ export default function VoiceBotInterface() {
   }, [])
 
   const disconnect = useCallback(async () => {
-    console.log('[DISCONNECT_CALLED] User initiated disconnect')
     if (room) {
-      // Remove audio element from DOM
       if (remoteAudioRef.current && remoteAudioRef.current.parentNode) {
         try {
           remoteAudioRef.current.parentNode.removeChild(remoteAudioRef.current)
@@ -155,7 +146,6 @@ export default function VoiceBotInterface() {
         remoteAudioRef.current = null
       }
 
-      // Close audio context
       if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
         try {
           audioContextRef.current.close()
@@ -165,8 +155,7 @@ export default function VoiceBotInterface() {
         audioContextRef.current = null
       }
 
-      await room.disconnect()
-      console.log('[DISCONNECT_COMPLETE] Room disconnected')
+      await safeDisconnect(room)
       setRoom(null)
       setIsConnected(false)
     }
@@ -176,7 +165,7 @@ export default function VoiceBotInterface() {
     if (room) {
       if (isMuted) {
         await room.localParticipant.setMicrophoneEnabled(true, undefined, {
-          audioPreset: { maxBitrate: 28000 },
+          audioBitrate: 28000,
           dtx: true,
           red: true
         })
@@ -188,10 +177,9 @@ export default function VoiceBotInterface() {
     }
   }, [room, isMuted])
 
-  // Cleanup audio element and room on unmount only
+  // Cleanup audio element on unmount only
   useEffect(() => {
     return () => {
-      console.log('[CLEANUP] Component unmounting, cleaning up resources')
       if (remoteAudioRef.current && remoteAudioRef.current.parentNode) {
         try {
           remoteAudioRef.current.parentNode.removeChild(remoteAudioRef.current)
@@ -206,13 +194,7 @@ export default function VoiceBotInterface() {
           console.warn('Error closing audio context:', err)
         }
       }
-      // Disconnect room on component unmount only (not on room state changes)
-      if (room) {
-        console.log('[CLEANUP] Disconnecting room on unmount')
-        room.disconnect()
-      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (
