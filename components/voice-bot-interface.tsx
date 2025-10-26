@@ -53,8 +53,11 @@ export default function VoiceBotInterface() {
             console.log('[AUDIO_ARMED]=true context_state=resumed')
           }
 
-          await newRoom.localParticipant.setMicrophoneEnabled(true)
-          console.log('[MICROPHONE_ENABLED] Microphone enabled')
+          await newRoom.localParticipant.setMicrophoneEnabled(true, undefined, {
+            audioPreset: { maxBitrate: 28000 },
+            dtx: true
+          })
+          console.log('[MICROPHONE_ENABLED] Microphone enabled with 28kbps bitrate and DTX')
         } catch (err) {
           console.warn('Failed to enable microphone:', err)
         }
@@ -149,7 +152,10 @@ export default function VoiceBotInterface() {
   const toggleMute = useCallback(async () => {
     if (room) {
       if (isMuted) {
-        await room.localParticipant.setMicrophoneEnabled(true)
+        await room.localParticipant.setMicrophoneEnabled(true, undefined, {
+          audioPreset: { maxBitrate: 28000 },
+          dtx: true
+        })
         setIsMuted(false)
       } else {
         await room.localParticipant.setMicrophoneEnabled(false)
