@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
     // Use provided room name or generate unique one per session
     // This prevents users from being forced into the same room
-    const assignedRoom = roomName || `roleplay-${randomUUID()}`
+    const assignedRoom = roomName || `room-test-roleplay-${randomUUID()}`
 
     // Create access token for the participant
     const at = new AccessToken(apiKey, apiSecret, {

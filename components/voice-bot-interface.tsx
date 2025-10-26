@@ -22,7 +22,7 @@ export default function VoiceBotInterface() {
 
       const participantName = `user-${Date.now()}`
       // Generate UNIQUE room name for EACH conversation (not reused across sessions)
-      const roomName = `roleplay-${Date.now()}-${Math.random().toString(36).substring(7)}`
+      const roomName = `room-test-roleplay-${Date.now()}-${Math.random().toString(36).substring(7)}`
 
       // Create fresh AudioContext for this session
       const newAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
