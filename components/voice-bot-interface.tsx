@@ -12,11 +12,16 @@ declare global {
 }
 
 // Safe disconnect helper with optional trace
-function safeDisconnect(room: Room): Promise<void> {
+function safeDisconnect(room: Room, reason: string): Promise<void> {
   if (!window.__CALL_DEBUG__) return room.disconnect()
-  console.warn('[DISCONNECT_CALLED]')
+  console.warn('[DISCONNECT_CALLED]', reason)
   console.trace()
   return room.disconnect()
+}
+
+// Initialize debug flag
+if (typeof window !== 'undefined' && window.__CALL_DEBUG__ === undefined) {
+  window.__CALL_DEBUG__ = false
 }
 
 export default function VoiceBotInterface() {
@@ -155,7 +160,7 @@ export default function VoiceBotInterface() {
         audioContextRef.current = null
       }
 
-      await safeDisconnect(room)
+      await safeDisconnect(room, 'EXPLICIT_HANGUP')
       setRoom(null)
       setIsConnected(false)
     }
