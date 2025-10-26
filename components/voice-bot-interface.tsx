@@ -97,6 +97,13 @@ export default function VoiceBotInterface() {
         }
       })
 
+      // Log when local audio track is successfully published (for QA)
+      newRoom.on(RoomEvent.LocalTrackPublished, (publication) => {
+        if (publication.kind === Track.Kind.Audio) {
+          console.log(`[AUDIO_TRACK_PUBLISHED] track=${publication.trackSid} bitrate=${publication.track?.mediaStreamTrack.getSettings().sampleRate}`)
+        }
+      })
+
       await newRoom.connect(url, token)
       setRoom(newRoom)
 
@@ -115,12 +122,14 @@ export default function VoiceBotInterface() {
         await newRoom.localParticipant.setMicrophoneEnabled(true)
         console.log('[MIC_PERMISSION] Microphone permission granted')
 
-        // Step 2: Re-enable with publish options for bandwidth optimization
+        // Step 2: Re-enable with publish options for bandwidth optimization and network resilience
         await newRoom.localParticipant.setMicrophoneEnabled(true, undefined, {
           audioPreset: { maxBitrate: 28000 },
-          dtx: true
+          dtx: true,
+          red: true,   // Enable redundancy encoding for packet loss recovery
+          fec: true    // Enable forward error correction for network resilience
         })
-        console.log('[MICROPHONE_ENABLED] Microphone enabled with 28kbps bitrate and DTX')
+        console.log('[MICROPHONE_ENABLED] Microphone enabled with 28kbps bitrate, DTX, RED, and FEC')
       } catch (err) {
         console.warn('Failed to enable microphone:', err)
       }
@@ -164,7 +173,9 @@ export default function VoiceBotInterface() {
       if (isMuted) {
         await room.localParticipant.setMicrophoneEnabled(true, undefined, {
           audioPreset: { maxBitrate: 28000 },
-          dtx: true
+          dtx: true,
+          red: true,
+          fec: true
         })
         setIsMuted(false)
       } else {
