@@ -75,6 +75,7 @@ export default function VoiceBotInterface() {
 
             if (participant.identity.includes('agent')) {
               console.log('[AGENT_TRACK_BOUND] Agent audio bound and playing')
+              console.log('[READY_FOR_USER] Room connected, agent ready, awaiting user speech')
               setIsAgentSpeaking(true)
             }
           } catch (err) {
@@ -100,7 +101,9 @@ export default function VoiceBotInterface() {
       // Log when local audio track is successfully published (for QA)
       newRoom.on(RoomEvent.LocalTrackPublished, (publication) => {
         if (publication.kind === Track.Kind.Audio) {
-          console.log(`[AUDIO_TRACK_PUBLISHED] track=${publication.trackSid} bitrate=${publication.track?.mediaStreamTrack.getSettings().sampleRate}`)
+          const settings = publication.track?.mediaStreamTrack.getSettings()
+          console.log(`[AUDIO_TRACK_PUBLISHED] track=${publication.trackSid} sampleRate=${settings?.sampleRate}`)
+          console.log(`[MIC_SENDING] Local microphone track publishing audio to room`)
         }
       })
 
@@ -140,6 +143,7 @@ export default function VoiceBotInterface() {
   }, [])
 
   const disconnect = useCallback(async () => {
+    console.log('[DISCONNECT_CALLED] User initiated disconnect')
     if (room) {
       // Remove audio element from DOM
       if (remoteAudioRef.current && remoteAudioRef.current.parentNode) {
@@ -162,6 +166,7 @@ export default function VoiceBotInterface() {
       }
 
       await room.disconnect()
+      console.log('[DISCONNECT_COMPLETE] Room disconnected')
       setRoom(null)
       setIsConnected(false)
     }
@@ -183,9 +188,10 @@ export default function VoiceBotInterface() {
     }
   }, [room, isMuted])
 
-  // Cleanup audio element on unmount only
+  // Cleanup audio element and room on unmount only
   useEffect(() => {
     return () => {
+      console.log('[CLEANUP] Component unmounting, cleaning up resources')
       if (remoteAudioRef.current && remoteAudioRef.current.parentNode) {
         try {
           remoteAudioRef.current.parentNode.removeChild(remoteAudioRef.current)
@@ -200,15 +206,14 @@ export default function VoiceBotInterface() {
           console.warn('Error closing audio context:', err)
         }
       }
+      // Disconnect room on component unmount only (not on room state changes)
+      if (room) {
+        console.log('[CLEANUP] Disconnecting room on unmount')
+        room.disconnect()
+      }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  // Cleanup
-  useEffect(() => {
-    return () => {
-      if (room) room.disconnect()
-    }
-  }, [room])
 
   return (
     <div className="space-y-6">
