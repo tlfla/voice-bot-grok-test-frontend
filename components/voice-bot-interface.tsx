@@ -121,7 +121,7 @@ export default function VoiceBotInterface() {
 
       try {
         await newRoom.localParticipant.setMicrophoneEnabled(true, undefined, {
-          audioBitrate: 28000,
+          audioPreset: { maxBitrate: 28000 },
           dtx: true,
           red: true
         })
@@ -165,7 +165,7 @@ export default function VoiceBotInterface() {
     if (room) {
       if (isMuted) {
         await room.localParticipant.setMicrophoneEnabled(true, undefined, {
-          audioBitrate: 28000,
+          audioPreset: { maxBitrate: 28000 },
           dtx: true,
           red: true
         })
