@@ -44,23 +44,8 @@ export default function VoiceBotInterface() {
 
       const newRoom = new Room()
 
-      newRoom.on(RoomEvent.Connected, async () => {
+      newRoom.on(RoomEvent.Connected, () => {
         console.log('[ROOM_CONNECTED] Connected to room')
-        try {
-          // Resume audio context after user gesture
-          if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
-            await audioContextRef.current.resume()
-            console.log('[AUDIO_ARMED]=true context_state=resumed')
-          }
-
-          await newRoom.localParticipant.setMicrophoneEnabled(true, undefined, {
-            audioPreset: { maxBitrate: 28000 },
-            dtx: true
-          })
-          console.log('[MICROPHONE_ENABLED] Microphone enabled with 28kbps bitrate and DTX')
-        } catch (err) {
-          console.warn('Failed to enable microphone:', err)
-        }
         setIsConnected(true)
         setIsLoading(false)
       })
@@ -114,6 +99,31 @@ export default function VoiceBotInterface() {
 
       await newRoom.connect(url, token)
       setRoom(newRoom)
+
+      // iOS Safari: unlock audio playback with user gesture
+      await newRoom.startAudio()
+      console.log('[AUDIO_UNLOCKED] Audio context started for iOS Safari')
+
+      // Resume audio context after user gesture
+      if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+        await audioContextRef.current.resume()
+        console.log('[AUDIO_ARMED]=true context_state=resumed')
+      }
+
+      try {
+        // Step 1: Prompt for mic permission (iOS Safari needs this separate)
+        await newRoom.localParticipant.setMicrophoneEnabled(true)
+        console.log('[MIC_PERMISSION] Microphone permission granted')
+
+        // Step 2: Re-enable with publish options for bandwidth optimization
+        await newRoom.localParticipant.setMicrophoneEnabled(true, undefined, {
+          audioBitrate: 28000,  // Use audioBitrate instead of audioPreset for iOS compatibility
+          dtx: true
+        })
+        console.log('[MICROPHONE_ENABLED] Microphone enabled with 28kbps bitrate and DTX')
+      } catch (err) {
+        console.warn('Failed to enable microphone:', err)
+      }
     } catch (error) {
       console.error('Error initializing room:', error)
       setError(error instanceof Error ? error.message : 'Failed to connect')
@@ -153,7 +163,7 @@ export default function VoiceBotInterface() {
     if (room) {
       if (isMuted) {
         await room.localParticipant.setMicrophoneEnabled(true, undefined, {
-          audioPreset: { maxBitrate: 28000 },
+          audioBitrate: 28000,  // Use audioBitrate for iOS compatibility
           dtx: true
         })
         setIsMuted(false)
