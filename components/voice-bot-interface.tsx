@@ -117,7 +117,7 @@ export default function VoiceBotInterface() {
 
         // Step 2: Re-enable with publish options for bandwidth optimization
         await newRoom.localParticipant.setMicrophoneEnabled(true, undefined, {
-          audioBitrate: 28000,  // Use audioBitrate instead of audioPreset for iOS compatibility
+          audioPreset: { maxBitrate: 28000 },
           dtx: true
         })
         console.log('[MICROPHONE_ENABLED] Microphone enabled with 28kbps bitrate and DTX')
@@ -163,7 +163,7 @@ export default function VoiceBotInterface() {
     if (room) {
       if (isMuted) {
         await room.localParticipant.setMicrophoneEnabled(true, undefined, {
-          audioBitrate: 28000,  // Use audioBitrate for iOS compatibility
+          audioPreset: { maxBitrate: 28000 },
           dtx: true
         })
         setIsMuted(false)
