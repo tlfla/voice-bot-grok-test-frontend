@@ -126,10 +126,9 @@ export default function VoiceBotInterface() {
         await newRoom.localParticipant.setMicrophoneEnabled(true, undefined, {
           audioPreset: { maxBitrate: 28000 },
           dtx: true,
-          red: true,   // Enable redundancy encoding for packet loss recovery
-          fec: true    // Enable forward error correction for network resilience
+          red: true   // Enable RED (redundancy encoding) for packet loss recovery
         })
-        console.log('[MICROPHONE_ENABLED] Microphone enabled with 28kbps bitrate, DTX, RED, and FEC')
+        console.log('[MICROPHONE_ENABLED] Microphone enabled with 28kbps bitrate, DTX, and RED')
       } catch (err) {
         console.warn('Failed to enable microphone:', err)
       }
@@ -174,8 +173,7 @@ export default function VoiceBotInterface() {
         await room.localParticipant.setMicrophoneEnabled(true, undefined, {
           audioPreset: { maxBitrate: 28000 },
           dtx: true,
-          red: true,
-          fec: true
+          red: true
         })
         setIsMuted(false)
       } else {
