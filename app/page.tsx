@@ -20,11 +20,6 @@ export default function Home() {
         <div className="bg-form-white rounded-lg shadow-lg p-8">
           <VoiceBotInterface />
         </div>
-
-        {/* Footer */}
-        <div className="mt-8 pt-6 border-t border-form-border-light text-center text-form-text-gray text-sm">
-          <p>Powered by LiveKit • Real-time voice AI</p>
-        </div>
       </div>
     </div>
   )
