@@ -1,11 +1,12 @@
-# Real Estate Voice Coach - Frontend (Current Live Cerebras)
+# Real Estate Voice Coach - Frontend (SPEED TEST)
 
-Production Next.js web interface for real estate roleplay coaching with AI, deployed on Vercel.
+**Testing voice improvements** - Isolated from production.
 
-**Repository**: `tlfla/voice-bot-separate`  
-**Branch**: `voice-2-enhancement`  
+**Repository**: `tlfla/voice-bot-frontend-speed-test`  
+**Branch**: `main`  
 **Deployment**: Vercel (auto-deploy from GitHub)  
-**Live URL**: `voice-bot-separate-git-voice-2-enhancement-tlflas-projects.vercel.app`
+**Live URL**: `voice-bot-frontend-speed-test.vercel.app`  
+**Status**: TESTING - Safe to modify
 
 ---
 
