@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     at.roomConfig = new RoomConfiguration({
       agents: [
         new RoomAgentDispatch({
-          agentName: 'roleplay-test',  // Must match backend agent name
+          agentName: 'roleplay-speed-test',  // UNIQUE NAME - prevents collision with production backend
           metadata: JSON.stringify({
             room: assignedRoom,
             participant: participantName,
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
 
     const token = await at.toJwt()
 
-    console.info(`[TOKEN_MINTED] room=${assignedRoom} agentName=roleplay participant=${participantName} status=success`)
+    console.info(`[TOKEN_MINTED] room=${assignedRoom} agentName=roleplay-speed-test participant=${participantName} status=success`)
 
     return NextResponse.json({
       token,
