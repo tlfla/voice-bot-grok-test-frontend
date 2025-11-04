@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     at.roomConfig = new RoomConfiguration({
       agents: [
         new RoomAgentDispatch({
-          agentName: 'roleplay',
+          agentName: 'roleplay-test',  // Must match backend agent name
           metadata: JSON.stringify({
             room: assignedRoom,
             participant: participantName,
