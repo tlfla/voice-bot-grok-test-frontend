@@ -239,8 +239,8 @@ export default function VoiceBotInterface() {
 
       try {
         await newRoom.localParticipant.setMicrophoneEnabled(true, undefined, {
-          audioPreset: { maxBitrate: 64000 },  // Increased from 28000 for better quality
-          dtx: false,  // Disabled to prevent mid-sentence cutoffs
+          audioPreset: { maxBitrate: 32000 },
+          dtx: false,
           red: true
         })
       } catch (err) {
