@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { Room, RoomEvent, Track, RemoteParticipant } from 'livekit-client'
 import { Mic, MicOff, Phone, PhoneOff, Volume2, VolumeX } from 'lucide-react'
 import TrainingRecommendations from './training-recommendations'
+import jsPDF from 'jspdf';
 
 // Debug flag for diagnostics (set window.__CALL_DEBUG__ = true in console to enable)
 declare global {
@@ -72,6 +73,7 @@ interface EvaluationResult {
   training_recommendations?: TrainingRecommendation[]  // New format with URLs
   summary?: string | SummaryObject  // Support both string and object formats
   error?: string
+  scenario_type?: string; // Added for PDF report
 }
 
 export default function VoiceBotInterface() {
@@ -239,7 +241,7 @@ export default function VoiceBotInterface() {
 
       try {
         await newRoom.localParticipant.setMicrophoneEnabled(true, undefined, {
-          audioPreset: { maxBitrate: 28000 },
+          audioPreset: { maxBitrate: 32000 },
           dtx: true,
           red: true
         })
@@ -372,6 +374,77 @@ export default function VoiceBotInterface() {
       }
     }
   }, [room, isMuted])
+
+  const downloadPDF = useCallback(() => {
+    if (!evaluationResult) return;
+
+    const doc = new jsPDF('p', 'mm', 'letter');
+    let yPos = 20;
+
+    // Title
+    doc.setFontSize(16);
+    doc.text('Roleplay Evaluation Report', 20, yPos);
+    yPos += 10;
+
+    // Scenario and Overall Score
+    doc.setFontSize(12);
+    doc.text(`Scenario: ${evaluationResult.scenario_type || 'N/A'}`, 20, yPos);
+    yPos += 7;
+    doc.text(`Overall Score: ${evaluationResult.overall_score || 'N/A'}/10`, 20, yPos);
+    yPos += 10;
+
+    // Core Metrics
+    doc.text('Core Metrics:', 20, yPos);
+    yPos += 7;
+    Object.entries(evaluationResult.core_metrics || {}).forEach(([key, metric]) => {
+      doc.text(`${key.replace(/_/g, ' ').toUpperCase()}: ${metric.score}`, 25, yPos);
+      doc.text(metric.feedback, 25, yPos + 5);
+      yPos += 12;
+    });
+
+    // Top Wins
+    doc.text('Top Wins:', 20, yPos);
+    yPos += 7;
+    (evaluationResult.top_wins || []).forEach(win => {
+      doc.text(win.title, 25, yPos);
+      doc.text(win.description, 25, yPos + 5);
+      if (win.citation) doc.text(`Citation: ${win.citation}`, 25, yPos + 10);
+      yPos += 15;
+    });
+
+    // Top Improvements
+    doc.text('Top Improvements:', 20, yPos);
+    yPos += 7;
+    (evaluationResult.top_improvements || []).forEach(imp => {
+      doc.text(imp.title, 25, yPos);
+      doc.text(imp.what_you_said, 25, yPos + 5);
+      doc.text(`Suggested: ${imp.suggested_alternative}`, 25, yPos + 10);
+      yPos += 15;
+    });
+
+    // Training Recommendations
+    doc.text('Training Recommendations:', 20, yPos);
+    yPos += 7;
+    (evaluationResult.training_recommendations || []).forEach(rec => {
+      doc.text(`${rec.course} - ${rec.module}: ${rec.topic}`, 25, yPos);
+      doc.text(rec.reason, 25, yPos + 5);
+      doc.text(rec.url, 25, yPos + 10);
+      yPos += 15;
+    });
+
+    // Summary
+    doc.text('Summary:', 20, yPos);
+    yPos += 7;
+    if (evaluationResult.summary) {
+      doc.text(evaluationResult.summary.strengths || '', 25, yPos);
+      yPos += 7;
+      doc.text(evaluationResult.summary.growth_areas || '', 25, yPos);
+      yPos += 7;
+      doc.text(evaluationResult.summary.next_practice_focus || '', 25, yPos);
+    }
+
+    doc.save('evaluation-report.pdf');
+  }, [evaluationResult]);
 
   // Cleanup audio element on unmount only
   useEffect(() => {
@@ -712,6 +785,36 @@ export default function VoiceBotInterface() {
                       Error: {evaluationResult.error}
                     </div>
                   )}
+
+                  {/* Download PDF Button */}
+                  <div className="pt-3 border-t border-form-border-light">
+                    <button
+                      onClick={downloadPDF}
+                      className="w-full px-4 py-2 bg-form-gold-muted hover:bg-form-gold-muted-dark text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Download PDF Report
+                    </button>
+                  </div>
+
+                  {/* Fallback JSON download (Debug) */}
+                  <div className="pt-3 border-t border-form-border-light">
+                    <button
+                      onClick={() => {
+                        if (evaluationResult) {
+                          const blob = new Blob([JSON.stringify(evaluationResult, null, 2)], { type: 'application/json' });
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = 'evaluation.json';
+                          a.click();
+                          URL.revokeObjectURL(url);
+                        }
+                      }}
+                      className="w-full px-4 py-2 bg-form-border-light hover:bg-form-text-gray text-form-text-dark text-sm font-medium rounded-lg transition-colors"
+                    >
+                      Download JSON (Debug)
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
