@@ -446,11 +446,17 @@ export default function VoiceBotInterface() {
     doc.text('Summary:', 20, yPos);
     yPos += 7;
     if (evaluationResult.summary) {
-      doc.text(evaluationResult.summary.strengths || '', 25, yPos);
-      yPos += 7;
-      doc.text(evaluationResult.summary.growth_areas || '', 25, yPos);
-      yPos += 7;
-      doc.text(evaluationResult.summary.next_practice_focus || '', 25, yPos);
+      if (typeof evaluationResult.summary === 'object' && evaluationResult.summary !== null) {
+        const summary = evaluationResult.summary as any;
+        doc.text(summary.strengths || '', 25, yPos);
+        yPos += 7;
+        doc.text(summary.growth_areas || '', 25, yPos);
+        yPos += 7;
+        doc.text(summary.next_practice_focus || '', 25, yPos);
+      } else {
+        // Fallback for string summary (old format)
+        doc.text(String(evaluationResult.summary), 25, yPos);
+      }
     }
 
     doc.save('evaluation-report.pdf');
