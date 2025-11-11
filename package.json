@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@livekit/protocol": "^1.42.2",
+    "jspdf": "^3.0.3",
     "livekit-client": "^2.15.13",
     "livekit-server-sdk": "^2.14.0",
     "lucide-react": "^0.454.0",
