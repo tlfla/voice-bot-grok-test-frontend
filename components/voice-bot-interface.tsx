@@ -406,20 +406,30 @@ export default function VoiceBotInterface() {
     doc.text('Top Wins:', 20, yPos);
     yPos += 7;
     (evaluationResult.top_wins || []).forEach(win => {
-      doc.text(win.title, 25, yPos);
-      doc.text(win.description, 25, yPos + 5);
-      if (win.citation) doc.text(`Citation: ${win.citation}`, 25, yPos + 10);
-      yPos += 15;
+      if (typeof win === 'string') {
+        doc.text(win, 25, yPos);
+        yPos += 7;
+      } else {
+        doc.text(win.title, 25, yPos);
+        doc.text(win.description, 25, yPos + 5);
+        if (win.citation) doc.text(`Citation: ${win.citation}`, 25, yPos + 10);
+        yPos += 15;
+      }
     });
 
     // Top Improvements
     doc.text('Top Improvements:', 20, yPos);
     yPos += 7;
     (evaluationResult.top_improvements || []).forEach(imp => {
-      doc.text(imp.title, 25, yPos);
-      doc.text(imp.what_you_said, 25, yPos + 5);
-      doc.text(`Suggested: ${imp.suggested_alternative}`, 25, yPos + 10);
-      yPos += 15;
+      if (typeof imp === 'string') {
+        doc.text(imp, 25, yPos);
+        yPos += 7;
+      } else {
+        doc.text(imp.title, 25, yPos);
+        doc.text(imp.what_you_said, 25, yPos + 5);
+        doc.text(`Suggested: ${imp.suggested_alternative}`, 25, yPos + 10);
+        yPos += 15;
+      }
     });
 
     // Training Recommendations
