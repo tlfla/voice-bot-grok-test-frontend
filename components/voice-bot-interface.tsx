@@ -410,8 +410,8 @@ export default function VoiceBotInterface() {
         doc.text(win, 25, yPos);
         yPos += 7;
       } else {
-        doc.text(win.title, 25, yPos);
-        doc.text(win.description, 25, yPos + 5);
+        if (win.title) doc.text(win.title || '', 25, yPos);
+        if (win.description) doc.text(win.description || '', 25, yPos + 5);
         if (win.citation) doc.text(`Citation: ${win.citation}`, 25, yPos + 10);
         yPos += 15;
       }
@@ -425,9 +425,9 @@ export default function VoiceBotInterface() {
         doc.text(imp, 25, yPos);
         yPos += 7;
       } else {
-        doc.text(imp.title, 25, yPos);
-        doc.text(imp.what_you_said, 25, yPos + 5);
-        doc.text(`Suggested: ${imp.suggested_alternative}`, 25, yPos + 10);
+        if (imp.title) doc.text(imp.title || '', 25, yPos);
+        if (imp.what_you_said) doc.text(imp.what_you_said || '', 25, yPos + 5);
+        if (imp.suggested_alternative) doc.text(`Suggested: ${imp.suggested_alternative}`, 25, yPos + 10);
         yPos += 15;
       }
     });
