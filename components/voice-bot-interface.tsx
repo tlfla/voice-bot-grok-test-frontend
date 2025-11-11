@@ -766,35 +766,6 @@ export default function VoiceBotInterface() {
                     </div>
                   )}
 
-                  {/* Download JSON Button */}
-                  <div className="pt-3 border-t border-form-border-light">
-                    <button
-                      onClick={() => {
-                        const dataStr = JSON.stringify(evaluationResult, null, 2)
-                        const dataBlob = new Blob([dataStr], { type: 'application/json' })
-                        const url = URL.createObjectURL(dataBlob)
-                        const link = document.createElement('a')
-                        link.href = url
-                        link.download = `evaluation-${Date.now()}.json`
-                        link.click()
-                        URL.revokeObjectURL(url)
-                      }}
-                      className="w-full px-4 py-2 bg-form-border-light hover:bg-form-text-gray text-form-text-dark text-sm font-medium rounded-lg transition-colors"
-                    >
-                      📥 Download JSON
-                    </button>
-                  </div>
-
-                  {/* Debug JSON Output */}
-                  {typeof window !== 'undefined' && window.__EVAL_DEBUG__ && (
-                    <div className="pt-3 border-t border-form-border-light">
-                      <h4 className="font-medium text-form-text-dark text-sm mb-2">Debug Output</h4>
-                      <pre className="text-xs bg-form-off-white p-3 rounded overflow-x-auto">
-                        {JSON.stringify(evaluationResult, null, 2)}
-                      </pre>
-                    </div>
-                  )}
-
                   {/* Error */}
                   {evaluationResult.error && (
                     <div className="text-sm text-form-error">
@@ -808,27 +779,7 @@ export default function VoiceBotInterface() {
                       onClick={downloadPDF}
                       className="w-full px-4 py-2 bg-form-gold-muted hover:bg-form-gold-muted-dark text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Download PDF Report
-                    </button>
-                  </div>
-
-                  {/* Fallback JSON download (Debug) */}
-                  <div className="pt-3 border-t border-form-border-light">
-                    <button
-                      onClick={() => {
-                        if (evaluationResult) {
-                          const blob = new Blob([JSON.stringify(evaluationResult, null, 2)], { type: 'application/json' });
-                          const url = URL.createObjectURL(blob);
-                          const a = document.createElement('a');
-                          a.href = url;
-                          a.download = 'evaluation.json';
-                          a.click();
-                          URL.revokeObjectURL(url);
-                        }
-                      }}
-                      className="w-full px-4 py-2 bg-form-border-light hover:bg-form-text-gray text-form-text-dark text-sm font-medium rounded-lg transition-colors"
-                    >
-                      Download JSON (Debug)
+                      📥 Download PDF Report
                     </button>
                   </div>
                 </div>
