@@ -91,6 +91,8 @@ export default function VoiceBotInterface() {
 
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
+  const audioSourceRef = useRef<MediaElementAudioSourceNode | null>(null)
+  const gainNodeRef = useRef<GainNode | null>(null)
   const dataChannelHandlerRef = useRef<((payload: Uint8Array, participant?: any) => void) | null>(null)
 
   const initializeRoom = useCallback(async () => {
