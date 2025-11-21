@@ -47,10 +47,13 @@ export async function POST(request: NextRequest) {
     })
 
     // Configure agent auto-dispatch via roomConfig
+    // Use environment variable for agent name to match backend configuration
+    const agentName = process.env.LIVEKIT_AGENT_NAME || 'voice-bot-grok-test'
+    
     at.roomConfig = new RoomConfiguration({
       agents: [
         new RoomAgentDispatch({
-          agentName: 'roleplay-speed-test',  // UNIQUE NAME - prevents collision with production backend
+          agentName: agentName,  // Matches backend LIVEKIT_AGENT_NAME env var
           metadata: JSON.stringify({
             room: assignedRoom,
             participant: participantName,
@@ -61,7 +64,7 @@ export async function POST(request: NextRequest) {
 
     const token = await at.toJwt()
 
-    console.info(`[TOKEN_MINTED] room=${assignedRoom} agentName=roleplay-speed-test participant=${participantName} status=success`)
+    console.info(`[TOKEN_MINTED] room=${assignedRoom} agentName=${agentName} participant=${participantName} status=success`)
 
     return NextResponse.json({
       token,
