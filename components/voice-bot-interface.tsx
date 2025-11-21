@@ -243,7 +243,7 @@ export default function VoiceBotInterface() {
 
       try {
         await newRoom.localParticipant.setMicrophoneEnabled(true, undefined, {
-          audioPreset: { maxBitrate: 32000 },
+          audioPreset: { maxBitrate: 40000 },
           dtx: true,
           red: true
         })
